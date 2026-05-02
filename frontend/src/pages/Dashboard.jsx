@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { createSession, listSessions, logout, deleteSession } from '../api'
+import { createSession, listSessions, logout, deleteSession, getRecommendations } from '../api'
 import { useAuth } from '../App'
 
 function timeAgo(dateStr) {
@@ -35,6 +35,7 @@ export default function Dashboard() {
   const [maxQuestions, setMaxQuestions] = useState(10)
   const [startDifficulty, setStartDiff] = useState(2)
   const [sessions, setSessions]         = useState([])
+  const [recommendations, setRecs]      = useState([])
   const [loading, setLoading]           = useState(false)
   const [deleting, setDeleting]         = useState(null)
   const { user, setUser, setToken }     = useAuth()
@@ -43,6 +44,9 @@ export default function Dashboard() {
   useEffect(() => {
     listSessions()
       .then(r => setSessions(r.data))
+      .catch(() => {})
+    getRecommendations()
+      .then(r => setRecs(r.data.recommendations || []))
       .catch(() => {})
   }, [])
 
@@ -207,7 +211,10 @@ export default function Dashboard() {
                           : '—'}
                       </div>
                       {s.session_complete ? (
-                        <Link to={`/report/${s.session_id}`} style={styles.viewLink}>Report</Link>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <Link to={`/report/${s.session_id}`} style={styles.viewLink}>Report</Link>
+                          <Link to={`/replay/${s.session_id}`} style={{ ...styles.viewLink, color: '#10b981' }}>Replay</Link>
+                        </div>
                       ) : (
                         <Link to={`/interview/${s.session_id}`} style={styles.viewLink}>Resume</Link>
                       )}
@@ -226,6 +233,57 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+
+        {/* Recommendations */}
+        {recommendations.length > 0 && (
+          <div style={{ ...styles.card, marginTop: '1.5rem' }}>
+            <h2 style={styles.cardTitle}>
+              <span style={styles.cardIcon}>🎯</span> Recommended Practice
+            </h2>
+            <div style={styles.recGrid}>
+              {recommendations.slice(0, 4).map(r => {
+                const levelColor = r.level === 'Critical' ? '#ef4444' : r.level === 'Needs Work' ? '#f59e0b' : '#10b981'
+                const levelBg = r.level === 'Critical' ? '#fef2f2' : r.level === 'Needs Work' ? '#fffbeb' : '#ecfdf5'
+                return (
+                  <div key={r.topic} style={styles.recCard}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span style={{ fontWeight: 600, fontSize: '0.9rem', textTransform: 'capitalize' }}>
+                        {r.topic.replace('_', ' ')}
+                      </span>
+                      <span style={{
+                        background: levelBg, color: levelColor,
+                        padding: '2px 8px', borderRadius: '999px',
+                        fontSize: '0.7rem', fontWeight: 600,
+                      }}>
+                        {r.level}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '1.2rem', fontWeight: 700, color: levelColor }}>
+                        {Math.round(r.avg_score * 100)}%
+                      </span>
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                        {r.sessions_count} questions
+                      </span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b', lineHeight: 1.4 }}>
+                      {r.action}
+                    </p>
+                    <button
+                      onClick={() => {
+                        setTopicsInput(r.topic)
+                        window.scrollTo({ top: 0, behavior: 'smooth' })
+                      }}
+                      style={styles.recBtn}
+                    >
+                      Practice →
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         <div style={styles.footer}>
           <span>{user?.email}</span>
@@ -287,6 +345,11 @@ const styles = {
   sessionScore: { fontWeight: 700, fontSize: '0.95rem' },
   viewLink:    { fontSize: '0.75rem', color: '#6366f1', fontWeight: 500 },
   deleteBtn:   { background: 'none', border: 'none', color: '#cbd5e1', fontSize: '1.1rem', cursor: 'pointer', padding: '4px 8px', borderRadius: '6px', marginLeft: '4px', transition: 'color 0.15s ease, background 0.15s ease', lineHeight: 1 },
+
+  // Recommendations
+  recGrid:   { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' },
+  recCard:   { background: '#f8fafc', borderRadius: '12px', padding: '14px', border: '1px solid #f1f5f9' },
+  recBtn:    { marginTop: '10px', width: '100%', padding: '8px', background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' },
 
   // Footer
   footer:    { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginTop: '2rem', fontSize: '0.8rem', color: '#94a3b8' },

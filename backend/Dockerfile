@@ -4,7 +4,7 @@ WORKDIR /frontend
 COPY frontend/package.json frontend/package-lock.json* ./
 RUN npm install
 COPY frontend/ .
-RUN npm run build
+RUN npx vite build --outDir dist
 RUN mkdir -p /static && cp -r dist/* /static/
 
 # ── Stage 2: Python backend ─────────────────────────────────────────────────

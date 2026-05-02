@@ -140,6 +140,7 @@ export default function Report() {
               <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#fff' }}>{Math.round(overall * 100)}%</div>
             </div>
           </div>
+          <Link to={`/replay/${sessionId}`} style={styles.replayBtn}>▶ Replay Session</Link>
         </div>
       </div>
 
@@ -228,6 +229,7 @@ const styles = {
   heroTitle: { margin: '4px 0 2px', fontSize: '1.5rem', fontWeight: 700 },
   heroRole:  { margin: 0, fontSize: '0.9rem', opacity: 0.85 },
   heroScore: { display: 'flex', flexDirection: 'column', alignItems: 'center' },
+  replayBtn: { background: 'rgba(255,255,255,0.2)', color: '#fff', padding: '8px 16px', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 600, border: '1px solid rgba(255,255,255,0.3)', textDecoration: 'none' },
 
   // Score bar
   scoreBar:      { display: 'flex', gap: '2rem', background: '#fff', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.04)', marginBottom: '1.25rem', alignItems: 'center' },

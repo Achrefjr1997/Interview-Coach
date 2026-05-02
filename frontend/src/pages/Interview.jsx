@@ -8,6 +8,7 @@ import { cleanMath } from '../cleanMath'
 import SkillBar from '../components/SkillBar'
 import DifficultyBadge from '../components/DifficultyBadge'
 import Spinner from '../components/Spinner'
+import CodeRunner from '../components/CodeRunner'
 
 export default function Interview() {
   const { sessionId } = useParams()
@@ -184,6 +185,9 @@ export default function Interview() {
             </button>
           </form>
         </div>
+
+        {/* Code Execution Sandbox */}
+        <CodeRunner code={answer} onOutput={(out) => console.log('Python output:', out)} />
 
         <div style={{ textAlign: 'center' }}>
           <a href="/" style={styles.backLink}>End Session & Return</a>

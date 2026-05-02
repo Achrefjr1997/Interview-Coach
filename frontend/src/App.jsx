@@ -6,6 +6,7 @@ import Register  from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Interview from './pages/Interview'
 import Report    from './pages/Report'
+import Replay    from './pages/Replay'
 import Spinner   from './components/Spinner'
 
 const AuthCtx = createContext(null)
@@ -49,6 +50,9 @@ export default function App() {
           } />
           <Route path="/report/:sessionId" element={
             <RequireAuth><Report /></RequireAuth>
+          } />
+          <Route path="/replay/:sessionId" element={
+            <RequireAuth><Replay /></RequireAuth>
           } />
         </Routes>
       </BrowserRouter>

@@ -143,3 +143,78 @@ async def delete_session(
     await db.commit()
 
     return {"ok": True}
+
+
+@router.get("/recommendations")
+async def get_recommendations(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Analyze past sessions and recommend topics to practice."""
+    result = await db.execute(
+        select(SessionMeta)
+        .where(SessionMeta.user_id == user.id, SessionMeta.session_complete == True)
+        .order_by(SessionMeta.created_at.desc())
+    )
+    sessions = result.scalars().all()
+
+    if not sessions:
+        return {"recommendations": [], "message": "Complete an interview to get recommendations."}
+
+    # Aggregate scores per topic across all sessions
+    topic_scores: dict[str, list[float]] = {}
+    topic_counts: dict[str, int] = {}
+
+    for s in sessions:
+        config = {"configurable": {"thread_id": s.session_id}}
+        try:
+            snap = get_graph().get_state(config)
+            if not snap or not snap.values:
+                continue
+            scores = snap.values.get("skill_scores", {})
+            history = snap.values.get("history", [])
+            for topic, score in scores.items():
+                topic_scores.setdefault(topic, []).append(score)
+                topic_counts[topic] = topic_counts.get(topic, 0) + len(
+                    [r for r in history if r.get("topic") == topic]
+                )
+        except Exception:
+            continue
+
+    if not topic_scores:
+        return {"recommendations": [], "message": "No score data available yet."}
+
+    # Calculate average score per topic
+    topic_avg = {t: sum(scores) / len(scores) for t, scores in topic_scores.items()}
+
+    # Sort by weakness (lowest avg score first), then by frequency (least practiced)
+    def priority(t: str) -> float:
+        avg = topic_avg.get(t, 0.5)
+        count = topic_counts.get(t, 0)
+        return avg * 0.7 + (1.0 / (count + 1)) * 0.3
+
+    sorted_topics = sorted(topic_avg.keys(), key=priority)
+
+    recommendations = []
+    for topic in sorted_topics:
+        avg = topic_avg[topic]
+        count = topic_counts[topic]
+        if avg < 0.5:
+            level = "Critical"
+            action = "Focus here first — this is your weakest area."
+        elif avg < 0.7:
+            level = "Needs Work"
+            action = "Practice more to bring this up to par."
+        else:
+            level = "Maintain"
+            action = "Keep practicing to stay sharp."
+
+        recommendations.append({
+            "topic": topic,
+            "avg_score": round(avg, 3),
+            "sessions_count": count,
+            "level": level,
+            "action": action,
+        })
+
+    return {"recommendations": recommendations}

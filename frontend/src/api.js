@@ -16,6 +16,7 @@ export const createSession = (data)   => api.post('/sessions', data)
 export const listSessions  = ()       => api.get('/sessions')
 export const getSession    = (id)     => api.get(`/sessions/${id}`)
 export const deleteSession = (id)     => api.delete(`/sessions/${id}`)
+export const getRecommendations = ()  => api.get('/recommendations')
 
 // Answer (REST fallback)
 export const submitAnswer  = (data)   => api.post('/answer', data)
