@@ -1,0 +1,18 @@
+services:
+  app:
+    build: .
+    dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    env_file: backend/.env
+    volumes:
+      - ./data:/app/data
+    environment:
+      - COACH_DATABASE_URL=sqlite+aiosqlite:///./data/coach.db
+      - COACH_CHECKPOINTER_DB=./data/checkpoints.db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
