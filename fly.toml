@@ -1,10 +1,10 @@
-# fly.toml app configuration file generated for interview-coach-ulwygg on 2026-05-02T21:46:49Z
+# fly.toml app configuration file generated for interview-coach-mhaykw on 2026-05-02T22:00:37Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'interview-coach-ulwygg'
-primary_region = 'fra'
+app = 'interview-coach-mhaykw'
+primary_region = 'ams'
 
 [build]
   dockerfile = 'backend/Dockerfile'
