@@ -1,11 +1,14 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from app.db.models import Base
-from app.config import settings
 import os
 
-os.makedirs("data", exist_ok=True)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DATA_DIR = os.path.join(BASE_DIR, "data")
+os.makedirs(DATA_DIR, exist_ok=True)
 
-engine = create_async_engine(settings.coach_database_url, echo=False)
+DATABASE_URL = f"sqlite+aiosqlite:///{os.path.join(DATA_DIR, 'coach.db')}"
+
+engine = create_async_engine(DATABASE_URL, echo=False)
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,

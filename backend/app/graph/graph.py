@@ -1,3 +1,4 @@
+import os
 import sqlite3
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.sqlite import SqliteSaver
@@ -11,13 +12,16 @@ from app.config import settings
 
 _graph = None
 _conn = None
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 def get_graph():
     global _graph, _conn
     if _graph is None:
+        db_path = os.path.join(BASE_DIR, "data", "checkpoints.db")
+        os.makedirs(os.path.dirname(db_path), exist_ok=True)
         _conn = sqlite3.connect(
-            settings.coach_checkpointer_db,
+            db_path,
             check_same_thread=False,
         )
         saver = SqliteSaver(_conn)

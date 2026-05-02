@@ -24,6 +24,6 @@ RUN mkdir -p data && chown -R coach:coach /app
 USER coach
 
 HEALTHCHECK --interval=20s --timeout=5s --start-period=15s \
-  CMD python -c "import httpx; httpx.get('http://localhost:8000/health').raise_for_status()"
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
