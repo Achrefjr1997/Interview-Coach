@@ -1,0 +1,22 @@
+app = "interview-coach"
+
+[build]
+  dockerfile = "backend/Dockerfile"
+
+[env]
+  COACH_DATABASE_URL = "sqlite+aiosqlite:///data/coach.db"
+  COACH_CHECKPOINTER_DB = "/data/checkpoints.db"
+
+[mounts]
+  source = "data"
+  destination = "/app/data"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size = "shared-cpu-1x"
