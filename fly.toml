@@ -1,6 +1,7 @@
 app = "interview-coach"
 
 [build]
+  context = "."
   dockerfile = "backend/Dockerfile"
 
 [mounts]

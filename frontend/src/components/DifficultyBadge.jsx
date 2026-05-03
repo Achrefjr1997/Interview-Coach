@@ -1,9 +1,9 @@
 const COLORS = {
-  1: { bg: '#f1f5f9', text: '#475569', label: 'Entry' },
-  2: { bg: '#ede9fe', text: '#6d28d9', label: 'Junior' },
-  3: { bg: '#fef3c7', text: '#92400e', label: 'Mid' },
-  4: { bg: '#fee2e2', text: '#991b1b', label: 'Senior' },
-  5: { bg: '#fce7f3', text: '#9d174d', label: 'Staff' },
+  1: { bg: 'var(--surface-raised)', text: 'var(--text-secondary)', label: 'Entry' },
+  2: { bg: 'rgba(124,92,252,0.15)', text: 'var(--accent)', label: 'Junior' },
+  3: { bg: 'rgba(245,158,11,0.12)', text: 'var(--amber)', label: 'Mid' },
+  4: { bg: 'rgba(239,68,68,0.12)', text: 'var(--red)', label: 'Senior' },
+  5: { bg: 'rgba(239,68,68,0.18)', text: '#f87171', label: 'Staff' },
 }
 
 export default function DifficultyBadge({ level }) {

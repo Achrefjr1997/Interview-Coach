@@ -23,3 +23,6 @@ export const submitAnswer  = (data)   => api.post('/answer', data)
 
 // Report
 export const getReport     = (id)     => api.get(`/reports/${id}`)
+
+// Analytics
+export const getAnalytics  = ()       => api.get('/analytics')

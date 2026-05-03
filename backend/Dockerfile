@@ -20,8 +20,7 @@ COPY --from=builder /usr/local/lib/python3.12 /usr/local/lib/python3.12
 COPY --from=builder /usr/local/bin /usr/local/bin
 COPY backend/ .
 COPY --from=frontend-builder /static/ ./static/
-RUN mkdir -p data && chown -R coach:coach /app
-USER coach
+RUN mkdir -p data && chmod 777 data
 
 HEALTHCHECK --interval=20s --timeout=5s --start-period=15s \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"

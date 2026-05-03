@@ -2,3 +2,8 @@ frontend/node_modules
 backend/.venv
 
 backend/interview_coach_backend.egg-info
+
+data/
+backend/data/
+.env
+backend/.env

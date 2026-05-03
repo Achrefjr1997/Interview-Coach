@@ -12,14 +12,14 @@ from app.config import settings
 
 _graph = None
 _conn = None
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DATA_DIR = os.path.dirname(settings.coach_checkpointer_db) or "."
 
 
 def get_graph():
     global _graph, _conn
     if _graph is None:
-        db_path = os.path.join(BASE_DIR, "data", "checkpoints.db")
-        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+        os.makedirs(DATA_DIR, exist_ok=True)
+        db_path = settings.coach_checkpointer_db
         _conn = sqlite3.connect(
             db_path,
             check_same_thread=False,
