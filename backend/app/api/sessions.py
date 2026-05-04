@@ -4,12 +4,19 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.db.database import get_db
-from app.db.models import SessionMeta, User
+from app.db.models import SessionMeta, User, TrackedSkill, SkillProfile
 from app.auth import get_current_user
 from app.graph.graph import get_graph
 from app.graph.state import InterviewState
 
 router = APIRouter(prefix="/api/v1", tags=["sessions"])
+
+CATEGORY_WEIGHT_MAP = {
+    "missing_critical": 1.2,
+    "missing_nice": 1.0,
+    "trending": 0.9,
+    "matched": 0.8,
+}
 
 
 class CreateSessionRequest(BaseModel):
@@ -54,6 +61,18 @@ async def create_session(
         "final_report":          None,
         "overall_score":         None,
     }
+
+    # Load skill category weights from TrackedSkill rows
+    weights = {}
+    weight_result = await db.execute(
+        select(TrackedSkill).join(SkillProfile).where(
+            SkillProfile.user_id == user.id,
+            TrackedSkill.name.in_(req.topics),
+        )
+    )
+    for s in weight_result.scalars().all():
+        weights[s.name] = CATEGORY_WEIGHT_MAP.get(s.category, 1.0)
+    initial["skill_category_weights"] = weights
 
     config = {"configurable": {"thread_id": sid}}
     result = get_graph().invoke(initial, config=config, interrupt_before=["evaluator"])

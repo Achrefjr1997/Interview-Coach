@@ -7,3 +7,5 @@ data/
 backend/data/
 .env
 backend/.env
+backend/interview_coach_backend.egg-info
+.opencode

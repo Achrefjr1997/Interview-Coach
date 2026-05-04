@@ -25,6 +25,7 @@ class InterviewState(TypedDict):
 
     skill_scores:           Dict[str, float]
     topic_question_counts:  Dict[str, int]
+    skill_category_weights: Dict[str, float]  # from TrackedSkill rows, pre-loaded by API
     current_difficulty:     int
     current_topic:          str
 

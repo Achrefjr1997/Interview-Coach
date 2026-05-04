@@ -6,6 +6,8 @@ class Settings(BaseSettings):
     ollama_api_key: str   = ""
     ollama_model:   str   = "gpt-oss:120b"
 
+    tavily_api_key: str   = ""
+
     coach_database_url:    str = "sqlite+aiosqlite:///./data/coach.db"
     coach_checkpointer_db: str = "./data/checkpoints.db"
 

@@ -26,3 +26,11 @@ export const getReport     = (id)     => api.get(`/reports/${id}`)
 
 // Analytics
 export const getAnalytics  = ()       => api.get('/analytics')
+
+// CV Upload
+export const uploadCV = (formData) => api.post('/cv/analyze', formData)
+
+// Skills
+export const getSkillProfile      = ()       => api.get('/skills/profile')
+export const selectSkills         = (data)   => api.patch('/skills/select', data)
+export const getSkillSessionConfig = ()      => api.post('/skills/session-config')

@@ -8,6 +8,8 @@ import Interview from './pages/Interview'
 import Report    from './pages/Report'
 import Replay    from './pages/Replay'
 import Analytics from './pages/Analytics'
+import CVUpload  from './pages/CVUpload'
+import SkillSelector from './pages/SkillSelector'
 import Spinner   from './components/Spinner'
 
 const AuthCtx = createContext(null)
@@ -57,6 +59,12 @@ export default function App() {
           } />
           <Route path="/analytics" element={
             <RequireAuth><Analytics /></RequireAuth>
+          } />
+          <Route path="/cv" element={
+            <RequireAuth><CVUpload /></RequireAuth>
+          } />
+          <Route path="/skills" element={
+            <RequireAuth><SkillSelector /></RequireAuth>
           } />
         </Routes>
       </BrowserRouter>

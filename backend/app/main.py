@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
-from app.api import auth, sessions, interview, reports, analytics
+from app.api import auth, sessions, interview, reports, analytics, cv, skills
 from app.db.database import init_db
 from app.config import settings
 import os
@@ -33,6 +33,8 @@ app.include_router(sessions.router)
 app.include_router(interview.router)
 app.include_router(reports.router)
 app.include_router(analytics.router)
+app.include_router(cv.router)
+app.include_router(skills.router)
 
 
 @app.get("/health")

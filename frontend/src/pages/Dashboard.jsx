@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { createSession, listSessions, logout, deleteSession, getRecommendations } from '../api'
+import { createSession, listSessions, logout, deleteSession, getRecommendations, getSkillProfile } from '../api'
 import { useAuth } from '../App'
-import { Zap, Clock, Target, ChevronRight, Trash2, BarChart3, LogOut, TrendingUp, Award, Layers, ArrowRight } from 'lucide-react'
+import { Zap, Clock, Target, ChevronRight, Trash2, BarChart3, LogOut, TrendingUp, Award, Layers, ArrowRight, FileText } from 'lucide-react'
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -42,14 +42,16 @@ export default function Dashboard() {
   const [dataLoading, setDataLoading] = useState(true)
   const [error, setError] = useState('')
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [cvProfile, setCvProfile] = useState(null)
   const { user, setUser, setToken } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
-    Promise.all([listSessions(), getRecommendations()])
-      .then(([sRes, rRes]) => {
+    Promise.all([listSessions(), getRecommendations(), getSkillProfile().catch(() => ({ data: null }))])
+      .then(([sRes, rRes, pRes]) => {
         setSessions(sRes.data)
         setRecs(rRes.data.recommendations || [])
+        setCvProfile(pRes.data)
       })
       .catch(() => setError('Failed to load data'))
       .finally(() => setDataLoading(false))
@@ -195,6 +197,32 @@ export default function Dashboard() {
             </div>
             <div style={styles.statLabel}>Best Score</div>
           </div>
+
+          {/* CV Upload / Skill Plan Card */}
+          {cvProfile ? (
+            <div style={styles.cvCard}>
+              <div style={styles.cvCardIcon}><FileText size={18} color="var(--accent)" /></div>
+              <div style={{ flex: 1 }}>
+                <div style={styles.cvCardTitle}>Resume Skill Plan</div>
+                <div style={styles.cvCardSub}>{cvProfile.skills?.length || 0} skills tracked</div>
+              </div>
+              <Link to="/skills" style={styles.cvCardBtn}>
+                Open <ArrowRight size={14} />
+              </Link>
+              <Link to="/cv" style={styles.cvCardSubBtn} title="Re-upload CV">
+                Re-upload
+              </Link>
+            </div>
+          ) : (
+            <Link to="/cv" style={styles.cvCard}>
+              <div style={styles.cvCardIcon}><FileText size={18} color="var(--accent)" /></div>
+              <div>
+                <div style={styles.cvCardTitle}>Upload CV</div>
+                <div style={styles.cvCardSub}>Get a tailored plan</div>
+              </div>
+              <ArrowRight size={14} color="var(--text-muted)" />
+            </Link>
+          )}
 
           {/* New Interview Card (spans 2 cols) */}
           <div style={styles.bentoInterview}>
@@ -400,6 +428,14 @@ const styles = {
 
   // Bento Grid
   bento: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '2rem' },
+
+  // CV Card
+  cvCard: { gridColumn: 'span 4', display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px', textDecoration: 'none', transition: 'border-color 0.2s ease' },
+  cvCardIcon: { width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(124,92,252,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  cvCardTitle: { fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' },
+  cvCardSub: { fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '1px' },
+  cvCardBtn: { display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 14px', background: 'var(--accent)', color: '#fff', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, textDecoration: 'none' },
+  cvCardSubBtn: { display: 'inline-flex', alignItems: 'center', padding: '6px 10px', color: 'var(--text-muted)', borderRadius: '8px', fontSize: '0.7rem', fontWeight: 500, textDecoration: 'none' },
 
   // Stat Cards
   statCard: { background: 'var(--surface)', borderRadius: '14px', padding: '18px 20px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '6px', transition: 'all 0.2s ease' },

@@ -5,12 +5,88 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.db.database import get_db, AsyncSessionLocal
-from app.db.models import SessionMeta, UserSession, User
+from app.db.models import SessionMeta, UserSession, User, TrackedSkill, SkillSnapshot, SkillProfile
 from app.auth import get_current_user
 from app.graph.graph import get_graph
 from app.llm import chat_stream
 
 router = APIRouter(tags=["interview"])
+
+EMA_ALPHA = 0.4
+
+CATEGORY_WEIGHT_MAP = {
+    "missing_critical": 1.2,
+    "missing_nice": 1.0,
+    "trending": 0.9,
+    "matched": 0.8,
+}
+
+
+async def _load_skill_weights(db: AsyncSession, user_id: str, topics: list[str]) -> dict:
+    """Load TrackedSkill rows for the given topics and return category weight map."""
+    result = await db.execute(
+        select(TrackedSkill).join(SkillProfile).where(
+            SkillProfile.user_id == user_id,
+            TrackedSkill.name.in_(topics),
+        )
+    )
+    weights = {}
+    for s in result.scalars().all():
+        weights[s.name] = CATEGORY_WEIGHT_MAP.get(s.category, 1.0)
+    return weights
+
+
+async def _track_skill_answer(
+    db: AsyncSession,
+    user_id: str,
+    session_id: str,
+    topic: str,
+    score: float,
+    difficulty: int,
+    question: str,
+    answer: str,
+    rationale: str,
+):
+    """Write SkillSnapshot and update TrackedSkill EMA after each answer."""
+    # Find TrackedSkill for this user+topic via their SkillProfile
+    result = await db.execute(
+        select(TrackedSkill).join(SkillProfile).where(
+            SkillProfile.user_id == user_id,
+            TrackedSkill.name == topic,
+        )
+    )
+    skill = result.scalars().first()
+    if not skill:
+        return  # No trackable skill — CV pipeline wasn't run
+
+    prev_ema = skill.ema_score
+    new_ema = score if prev_ema is None else round(EMA_ALPHA * score + (1 - EMA_ALPHA) * prev_ema, 4)
+
+    snapshot = SkillSnapshot(
+        skill_id=skill.id,
+        session_id=session_id,
+        score=score,
+        ema_after=new_ema,
+        difficulty=difficulty,
+        question_text=question,
+        answer_text=answer,
+        rationale=rationale,
+    )
+    db.add(snapshot)
+
+    skill.ema_score = new_ema
+    skill.attempts = (skill.attempts or 0) + 1
+    skill.last_tested_at = datetime.now(timezone.utc)
+
+    # Check if this is the first snapshot for this skill+session combo
+    existing = await db.execute(
+        select(SkillSnapshot).where(
+            SkillSnapshot.skill_id == skill.id,
+            SkillSnapshot.session_id == session_id,
+        ).limit(1)
+    )
+    if not existing.scalars().first():
+        skill.sessions_count = (skill.sessions_count or 0) + 1
 
 
 class AnswerRequest(BaseModel):
@@ -59,6 +135,21 @@ async def submit_answer(
         await db.commit()
 
     last = result["history"][-1] if result["history"] else {}
+
+    # Track skill answer in DB
+    if last:
+        await _track_skill_answer(
+            db=db,
+            user_id=user.id,
+            session_id=req.session_id,
+            topic=last.get("topic", ""),
+            score=last.get("score", 0.0),
+            difficulty=result.get("current_difficulty", 2),
+            question=last.get("question", ""),
+            answer=req.answer,
+            rationale=last.get("score_rationale", ""),
+        )
+        await db.commit()
 
     return AnswerResponse(
         turn=result["turn_count"],
@@ -128,6 +219,22 @@ async def interview_ws(
             graph.update_state(config, {"current_answer": answer})
             result = graph.invoke(None, config=config, interrupt_before=["evaluator"])
             last   = result["history"][-1] if result["history"] else {}
+
+            # Track skill answer in DB
+            if last:
+                async with AsyncSessionLocal() as db:
+                    await _track_skill_answer(
+                        db=db,
+                        user_id=user.id,
+                        session_id=session_id,
+                        topic=last.get("topic", ""),
+                        score=last.get("score", 0.0),
+                        difficulty=result.get("current_difficulty", 2),
+                        question=last.get("question", ""),
+                        answer=answer,
+                        rationale=last.get("score_rationale", ""),
+                    )
+                    await db.commit()
 
             if result["session_complete"]:
                 async with AsyncSessionLocal() as db:
